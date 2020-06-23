@@ -12,7 +12,8 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_service:
-    path: ../flutter_service
+    git:
+      url: https://github.com/vkammerer/flutter_service.git
 
 dev_dependencies:
   flutter_test:

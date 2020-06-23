@@ -9,7 +9,8 @@ import android.content.SharedPreferences;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.core.app.AlarmManagerCompat;
-import com.vincentkammerer.flutter_service.FlutterServiceBroadcastReceiver;
+import com.vincentkammerer.flutter_service.FlutterJobIntentServiceBroadcastReceiver;
+import com.vincentkammerer.flutter_service.FlutterForegroundServiceBroadcastReceiver;
 import com.vincentkammerer.flutter_service.PluginRegistrantException;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.BinaryMessenger;
@@ -92,7 +93,8 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
         // This message indicates that the Flutter app would like to cancel a previously
         // scheduled task.
         int requestCode = ((JSONArray) arguments).getInt(0);
-        cancel(context, requestCode);
+        String serviceType = ((JSONArray) arguments).getString(1);
+        cancel(context, requestCode, serviceType);
         result.success(true);
       } else {
         result.notImplemented();
@@ -118,6 +120,7 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
       long startMillis = json.getLong(5);
       boolean rescheduleOnReboot = json.getBoolean(6);
       long callbackHandle = json.getLong(7);
+      String serviceType = json.getString(8);
 
       return new OneShotRequest(
           requestCode,
@@ -127,7 +130,8 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
           wakeup,
           startMillis,
           rescheduleOnReboot,
-          callbackHandle);
+          callbackHandle,
+          serviceType);
     }
 
     final int requestCode;
@@ -138,6 +142,7 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
     final long startMillis;
     final boolean rescheduleOnReboot;
     final long callbackHandle;
+    final String serviceType;
 
     OneShotRequest(
         int requestCode,
@@ -147,7 +152,8 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
         boolean wakeup,
         long startMillis,
         boolean rescheduleOnReboot,
-        long callbackHandle) {
+        long callbackHandle,
+        String serviceType) {
       this.requestCode = requestCode;
       this.alarmClock = alarmClock;
       this.allowWhileIdle = allowWhileIdle;
@@ -156,6 +162,7 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
       this.startMillis = startMillis;
       this.rescheduleOnReboot = rescheduleOnReboot;
       this.callbackHandle = callbackHandle;
+      this.serviceType = serviceType;
     }
   }
 
@@ -172,6 +179,7 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
       long intervalMillis = json.getLong(4);
       boolean rescheduleOnReboot = json.getBoolean(5);
       long callbackHandle = json.getLong(6);
+      String serviceType = json.getString(7);
 
       return new PeriodicRequest(
           requestCode,
@@ -180,7 +188,8 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
           startMillis,
           intervalMillis,
           rescheduleOnReboot,
-          callbackHandle);
+          callbackHandle,
+          serviceType);
     }
 
     final int requestCode;
@@ -190,6 +199,7 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
     final long intervalMillis;
     final boolean rescheduleOnReboot;
     final long callbackHandle;
+    final String serviceType;
 
     PeriodicRequest(
         int requestCode,
@@ -198,7 +208,8 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
         long startMillis,
         long intervalMillis,
         boolean rescheduleOnReboot,
-        long callbackHandle) {
+        long callbackHandle,
+        String serviceType) {
       this.requestCode = requestCode;
       this.exact = exact;
       this.wakeup = wakeup;
@@ -206,6 +217,7 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
       this.intervalMillis = intervalMillis;
       this.rescheduleOnReboot = rescheduleOnReboot;
       this.callbackHandle = callbackHandle;
+      this.serviceType = serviceType;
     }
   }
 
@@ -220,7 +232,8 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
       long startMillis,
       long intervalMillis,
       boolean rescheduleOnReboot,
-      long callbackHandle) {
+      long callbackHandle,
+      String serviceType) {
     if (rescheduleOnReboot) {
       addPersistentAlarm(
           context,
@@ -232,11 +245,23 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
           wakeup,
           startMillis,
           intervalMillis,
-          callbackHandle);
+          callbackHandle,
+          serviceType);
     }
 
     // Create an Intent for the alarm and set the desired Dart callback handle.
-    Intent alarm = new Intent(context, FlutterServiceBroadcastReceiver.class);
+    Intent alarm;
+    if (serviceType.equals("JobIntentService")) {
+      alarm = new Intent(context, FlutterJobIntentServiceBroadcastReceiver.class);
+    }
+    else if (serviceType.equals("ForegroundService")) {
+      alarm = new Intent(context, FlutterForegroundServiceBroadcastReceiver.class);
+    }
+    else {
+      Log.e(TAG, "At least one serviceType must be provided");
+      return;
+    }
+
     alarm.putExtra("id", requestCode);
     alarm.putExtra("callbackHandle", callbackHandle);
     PendingIntent pendingIntent =
@@ -295,7 +320,8 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
         request.startMillis,
         0,
         request.rescheduleOnReboot,
-        request.callbackHandle);
+        request.callbackHandle,
+        request.serviceType);
   }
 
   /**
@@ -317,18 +343,29 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
         request.startMillis,
         request.intervalMillis,
         request.rescheduleOnReboot,
-        request.callbackHandle);
+        request.callbackHandle,
+        request.serviceType);
   }
 
   /**
    * Cancels an alarm with ID {@code requestCode}.
    */
-  public static void cancel(Context context, int requestCode) {
+  public static void cancel(Context context, int requestCode, String serviceType) {
     // Clear the alarm if it was set to be rescheduled after reboots.
     clearPersistentAlarm(context, requestCode);
 
+    Intent alarm;
     // Cancel the alarm with the system alarm service.
-    Intent alarm = new Intent(context, FlutterServiceBroadcastReceiver.class);
+    if (serviceType.equals("JobIntentService")) {
+      alarm = new Intent(context, FlutterJobIntentServiceBroadcastReceiver.class);
+    }
+    else if (serviceType.equals("ForegroundService")) {
+      alarm = new Intent(context, FlutterForegroundServiceBroadcastReceiver.class);
+    }
+    else {
+      Log.e(TAG, "At least one valid service must be provided");
+      return;
+    }
     PendingIntent existingIntent =
         PendingIntent.getBroadcast(context, requestCode, alarm, PendingIntent.FLAG_NO_CREATE);
     if (existingIntent == null) {
@@ -353,7 +390,8 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
       boolean wakeup,
       long startMillis,
       long intervalMillis,
-      long callbackHandle) {
+      long callbackHandle,
+      String serviceType) {
     HashMap<String, Object> alarmSettings = new HashMap<>();
     alarmSettings.put("alarmClock", alarmClock);
     alarmSettings.put("allowWhileIdle", allowWhileIdle);
@@ -363,6 +401,7 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
     alarmSettings.put("startMillis", startMillis);
     alarmSettings.put("intervalMillis", intervalMillis);
     alarmSettings.put("callbackHandle", callbackHandle);
+    alarmSettings.put("serviceType", serviceType);
     JSONObject obj = new JSONObject(alarmSettings);
     String key = getPersistentAlarmKey(requestCode);
     SharedPreferences prefs = context.getSharedPreferences(SHARED_PREFERENCES_KEY, 0);
@@ -430,6 +469,7 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
           long startMillis = alarm.getLong("startMillis");
           long intervalMillis = alarm.getLong("intervalMillis");
           long callbackHandle = alarm.getLong("callbackHandle");
+          String serviceType = alarm.getString("serviceType");
           scheduleAlarm(
               context,
               requestCode,
@@ -441,7 +481,8 @@ public class AndroidAlarmManagerPlugin implements FlutterPlugin, MethodCallHandl
               startMillis,
               intervalMillis,
               false,
-              callbackHandle);
+              callbackHandle,
+              serviceType);
         } catch (JSONException e) {
           Log.e(TAG, "Data for alarm request code " + requestCode + " is invalid: " + json);
         }

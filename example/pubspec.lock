@@ -77,11 +77,13 @@ packages:
     source: sdk
     version: "0.0.0"
   flutter_service:
-    dependency: "direct main"
+    dependency: transitive
     description:
-      path: "../../flutter_service"
-      relative: true
-    source: path
+      path: "."
+      ref: HEAD
+      resolved-ref: cd6ed30ff5a6d9c19da5ecfafd48a48ef9233a41
+      url: "https://github.com/vkammerer/flutter_service.git"
+    source: git
     version: "0.0.1"
   flutter_test:
     dependency: "direct dev"
@@ -141,28 +143,28 @@ packages:
       name: shared_preferences
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.5.7"
+    version: "0.5.7+3"
   shared_preferences_macos:
     dependency: transitive
     description:
       name: shared_preferences_macos
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.0.1+7"
+    version: "0.0.1+10"
   shared_preferences_platform_interface:
     dependency: transitive
     description:
       name: shared_preferences_platform_interface
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.0.3"
+    version: "1.0.4"
   shared_preferences_web:
     dependency: transitive
     description:
       name: shared_preferences_web
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.1.2+4"
+    version: "0.1.2+7"
   sky_engine:
     dependency: transitive
     description: flutter

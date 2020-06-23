@@ -8,6 +8,7 @@ const String _pluginChannelName = "plugins.flutter.io/android_alarm_manager";
 const String _oneShotAtMethod = "onShotAt";
 const String _periodicMethod = "periodic";
 const String _cancelMethod = "cancel";
+const String _defaultServiceType = "JobIntentService";
 
 typedef DateTime _Now();
 typedef CallbackHandle _GetCallbackHandle(Function callback);
@@ -38,6 +39,7 @@ class AndroidAlarmManager {
     bool exact = false,
     bool wakeup = false,
     bool rescheduleOnReboot = false,
+    String serviceType = _defaultServiceType,
   }) =>
       oneShotAt(
         _now().add(delay),
@@ -48,6 +50,7 @@ class AndroidAlarmManager {
         exact: exact,
         wakeup: wakeup,
         rescheduleOnReboot: rescheduleOnReboot,
+        serviceType: serviceType,
       );
 
   static Future<bool> oneShotAt(
@@ -59,6 +62,7 @@ class AndroidAlarmManager {
     bool exact = false,
     bool wakeup = false,
     bool rescheduleOnReboot = false,
+    String serviceType = _defaultServiceType,
   }) async {
     // ignore: inference_failure_on_function_return_type
     assert(callback is Function() || callback is Function(int));
@@ -78,6 +82,7 @@ class AndroidAlarmManager {
       startMillis,
       rescheduleOnReboot,
       handle.toRawHandle(),
+      serviceType
     ]);
     return (r == null) ? false : r;
   }
@@ -90,6 +95,7 @@ class AndroidAlarmManager {
     bool exact = false,
     bool wakeup = false,
     bool rescheduleOnReboot = false,
+    String serviceType = _defaultServiceType,
   }) async {
     // ignore: inference_failure_on_function_return_type
     assert(callback is Function() || callback is Function(int));
@@ -109,7 +115,8 @@ class AndroidAlarmManager {
       first,
       period,
       rescheduleOnReboot,
-      handle.toRawHandle()
+      handle.toRawHandle(),
+      serviceType
     ]);
     return (r == null) ? false : r;
   }

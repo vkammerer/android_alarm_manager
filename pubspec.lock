@@ -65,9 +65,11 @@ packages:
   flutter_service:
     dependency: "direct main"
     description:
-      path: "../flutter_service"
-      relative: true
-    source: path
+      path: "."
+      ref: HEAD
+      resolved-ref: cd6ed30ff5a6d9c19da5ecfafd48a48ef9233a41
+      url: "https://github.com/vkammerer/flutter_service.git"
+    source: git
     version: "0.0.1"
   flutter_test:
     dependency: "direct dev"

@@ -2,7 +2,7 @@
   <library name="Flutter Plugins" type="FlutterPluginsLibraryType">
     <CLASSES>
       <root url="file://$PROJECT_DIR$" />
-      <root url="file://$PROJECT_DIR$/../flutter_service" />
+      <root url="file://$USER_HOME$/Dev/flutter/.pub-cache/git/flutter_service-cd6ed30ff5a6d9c19da5ecfafd48a48ef9233a41" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

@@ -1,14 +1,6 @@
-# android_alarm_manager
+### Warning: This is an experiment   
+This project is an adaptation of the [official Flutter Android Alarm Manager plugin](https://github.com/flutter/plugins/tree/master/packages/android_alarm_manager).
 
-A new flutter plugin project.
+It has been refactored to rely on [flutter_service](https://github.com/vkammerer/flutter_service) for Dart callbacks execution, but the public API remains the same.
 
-## Getting Started
-
-This project is a starting point for a Flutter
-[plug-in package](https://flutter.dev/developing-packages/),
-a specialized package that includes platform-specific implementation code for
-Android and/or iOS.
-
-For help getting started with Flutter, view our 
-[online documentation](https://flutter.dev/docs), which offers tutorials, 
-samples, guidance on mobile development, and a full API reference.
+Please refer to [flutter_service](https://github.com/vkammerer/flutter_service) for details about the rationale for this project.
